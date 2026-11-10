@@ -5,6 +5,9 @@
 package nc.geyserext.netease.util;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.ChannelFuture;
+import io.netty.util.concurrent.Future;
 import nc.geyserext.netease.initializer.NeteaseServerInitializer;
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption;
 import org.cloudburstmc.netty.channel.raknet.config.RakServerCookieMode;
@@ -38,6 +41,7 @@ public final class ServerRestartUtil {
         RaknetServer candidate = new RaknetServer(geyser,
             Math.max(1, Integer.getInteger("Geyser.BedrockNetworkThreads", 2)));
         NeteaseServerInitializer initializer = new NeteaseServerInitializer(geyser);
+        boolean bindAttempted = false;
         try {
             // This is an independent RaknetServer instance, NOT geyser.getGeyserServer().
             Field bootstrapField = RaknetServer.class.getDeclaredField("bootstrap");
@@ -45,16 +49,26 @@ public final class ServerRestartUtil {
             ServerBootstrap bootstrap = (ServerBootstrap) bootstrapField.get(candidate);
             if (bootstrap == null) throw new IllegalStateException("Geyser RaknetServer bootstrap missing");
 
+            // RaknetServer owns playerGroup. Replacing only the childHandler would
+            // leak the old player group and leave the NetEase player group running
+            // after shutdown. Transfer ownership before binding.
+            Field playerGroupField = RaknetServer.class.getDeclaredField("playerGroup");
+            playerGroupField.setAccessible(true);
+            EventLoopGroup previousPlayerGroup = (EventLoopGroup) playerGroupField.get(candidate);
+            playerGroupField.set(candidate, initializer.getEventLoopGroup());
+            previousPlayerGroup.shutdownGracefully();
+
             bootstrap.option(RakChannelOption.RAK_SUPPORTED_PROTOCOLS, new int[] {8});
             bootstrap.option(RakChannelOption.RAK_SERVER_COOKIE_MODE, RakServerCookieMode.INVALID);
             bootstrap.childHandler(initializer);
+            bindAttempted = true;
             candidate.bind(new InetSocketAddress(geyser.config().bedrock().address(), port)).join();
 
             neteaseInitializer = initializer;
             neteaseServer = candidate;
             geyser.getLogger().info("[GeyserNetease] NetEase-only RakNet v8 listener bound on UDP " + port);
         } catch (Throwable error) {
-            close(candidate, initializer);
+            close(candidate, initializer, bindAttempted);
             throw new IllegalStateException("NetEase listener failed; primary Geyser listener was not touched", error);
         }
     }
@@ -64,19 +78,32 @@ public final class ServerRestartUtil {
         NeteaseServerInitializer initializer = neteaseInitializer;
         neteaseServer = null;
         neteaseInitializer = null;
-        close(server, initializer);
+        close(server, initializer, true);
     }
 
-    private static void close(RaknetServer server, NeteaseServerInitializer initializer) {
+    private static void close(RaknetServer server, NeteaseServerInitializer initializer, boolean bindAttempted) {
         if (server != null) {
             try {
-                server.shutdown();
+                if (bindAttempted) {
+                    server.shutdown();
+                } else {
+                    // shutdown() assumes bind() populated bootstrapFutures. Before
+                    // bind(), release the three groups directly instead.
+                    for (String fieldName : new String[] {"group", "childGroup", "playerGroup"}) {
+                        Field field = RaknetServer.class.getDeclaredField(fieldName);
+                        field.setAccessible(true);
+                        EventLoopGroup group = (EventLoopGroup) field.get(server);
+                        if (group != null && !group.isShuttingDown()) {
+                            group.shutdownGracefully();
+                        }
+                    }
+                }
             } catch (Throwable error) {
                 GeyserImpl.getInstance().getLogger().warning(
                     "[GeyserNetease] Isolated listener cleanup failed: " + error);
             }
         }
-        if (initializer != null) {
+        if (initializer != null && !initializer.getEventLoopGroup().isShuttingDown()) {
             initializer.getEventLoopGroup().shutdownGracefully();
         }
     }
