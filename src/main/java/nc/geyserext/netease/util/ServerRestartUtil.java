@@ -40,11 +40,13 @@ public final class ServerRestartUtil {
         }
         if (neteaseServer != null) throw new IllegalStateException("NetEase listener already running");
 
-        RaknetServer candidate = new RaknetServer(geyser,
-            Math.max(1, Integer.getInteger("Geyser.BedrockNetworkThreads", 2)));
-        NeteaseServerInitializer initializer = new NeteaseServerInitializer(geyser);
+        RaknetServer candidate = null;
+        NeteaseServerInitializer initializer = null;
         boolean bindAttempted = false;
         try {
+            candidate = new RaknetServer(geyser,
+                Math.max(1, Integer.getInteger("Geyser.BedrockNetworkThreads", 2)));
+            initializer = new NeteaseServerInitializer(geyser);
             // This is an independent RaknetServer instance, NOT geyser.getGeyserServer().
             Field bootstrapField = RaknetServer.class.getDeclaredField("bootstrap");
             bootstrapField.setAccessible(true);
