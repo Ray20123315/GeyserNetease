@@ -30,7 +30,18 @@ jobs:
       - name: Check source isolation invariants
         run: python3 -m unittest discover -s tests -v
       - name: Compile and package
-        run: chmod +x ./gradlew && ./gradlew --no-daemon clean shadowJar --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          chmod +x ./gradlew
+          ./gradlew --no-daemon clean shadowJar --stacktrace 2>&1 | tee gradle-build.log
+      - name: Upload build log (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeyserNetease-build-log
+          path: gradle-build.log
+          if-no-files-found: warn
       - name: Publish test artifact (not for production)
         if: success()
         uses: actions/upload-artifact@v4
