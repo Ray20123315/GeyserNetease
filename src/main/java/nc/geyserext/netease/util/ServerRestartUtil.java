@@ -6,8 +6,6 @@ package nc.geyserext.netease.util;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.ChannelFuture;
-import io.netty.util.concurrent.Future;
 import nc.geyserext.netease.initializer.NeteaseServerInitializer;
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption;
 import org.cloudburstmc.netty.channel.raknet.config.RakServerCookieMode;
