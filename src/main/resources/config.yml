@@ -1,3 +1,6 @@
+# Experimental dedicated NetEase listener. 0 = disabled; NEVER set to your normal Geyser port.
+netease-listen-port: 0
+
 # When set to true, only NetEase clients (RakNet protocol version 8) are allowed to join.
 # Standard Bedrock Edition clients will be rejected.
 # When false (default), both NetEase and standard Bedrock clients can connect.
