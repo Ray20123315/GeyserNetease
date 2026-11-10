@@ -32,11 +32,8 @@ public final class NetEaseEncryptionUtils {
         }
 
         return switch (chain.size()) {
-            case 1 -> {
-                JsonWebSignature identity = new JsonWebSignature();
-                identity.setCompactSerialization(chain.get(0));
-                yield new ChainValidationResult(false, identity.getUnverifiedPayload());
-            }
+            // Never accept a self-supplied identity with no trusted NetEase signature.
+            case 1 -> throw new SecurityException("Unsigned NetEase login chain rejected");
             case 3 -> {
                 ECPublicKey currentKey = null;
                 Map<String, Object> parsedPayload = null;
