@@ -123,13 +123,14 @@ public class SpoofedUpstream extends UpstreamSession {
     }
 
     public static boolean patchAll(BlockMappings orig) throws Throwable {
-        boolean ok = patchOne(orig, "javaToBedrockBlocks");
-        ok |= patchOne(orig, "bedrockRuntimeMap");
-        ok |= patchOne(orig, "javaToVanillaBedrockBlocks");
+        boolean javaBlocks = patchOne(orig, "javaToBedrockBlocks");
+        boolean runtimeMap = patchOne(orig, "bedrockRuntimeMap");
+        boolean vanillaBlocks = patchOne(orig, "javaToVanillaBedrockBlocks");
+        if (!javaBlocks || !runtimeMap || !vanillaBlocks) return false;
         patchSingletonBlockDef(orig, "bedrockAir");
         patchSingletonBlockDef(orig, "bedrockWater");
         patchSingletonBlockDef(orig, "bedrockMovingBlock");
-        return ok;
+        return true;
     }
 
     private static void patchSingletonBlockDef(BlockMappings orig, String fieldName) {
