@@ -92,7 +92,10 @@ public class NetEaseUpstreamHandler extends UpstreamHandlerBase {
                     Object u = ((Map<?, ?>) red).get("uid");
                     if (u instanceof Number) neteaseUid = ((Number) u).longValue();
                 }
-                if (neteaseUid == 0) neteaseUid = Math.abs(name.hashCode());
+                if (neteaseUid == 0) {
+                    session.disconnect("NetEase identity is missing a verified UID");
+                    return PacketSignal.HANDLED;
+                }
                 neteaseSession.setUid(neteaseUid);
 
                 String rawId = extra.identity != null ? extra.identity.toString() : null;
@@ -119,16 +122,23 @@ public class NetEaseUpstreamHandler extends UpstreamHandlerBase {
         } catch (Exception e) { session.disconnect("disconnectionScreen.internalError.cantConnect"); NeteaseExtension.LOG.error("NetEase auth failed", e); return PacketSignal.HANDLED; }
 
         int spoofedVersion = GameProtocol.DEFAULT_BEDROCK_PROTOCOL;
-        var shared = BlockRegistries.BLOCKS.forVersion(spoofedVersion);
-        var blockMappings = shared;
-        try { blockMappings = nc.geyserext.netease.session.SpoofedUpstream.cloneBlockMappings(shared); }
-        catch (Throwable e) { NeteaseExtension.LOG.error("BlockMappings clone failed, using shared: " + e.getMessage()); }
+        // Never modify shared mappings used by international Bedrock sessions.
+        final org.geysermc.geyser.registry.type.BlockMappings blockMappings;
+        try {
+            blockMappings = nc.geyserext.netease.session.SpoofedUpstream.cloneBlockMappings(
+                    BlockRegistries.BLOCKS.forVersion(spoofedVersion));
+            if (!nc.geyserext.netease.session.SpoofedUpstream.patchAll(blockMappings)) {
+                throw new IllegalStateException("NetEase block mappings could not be isolated");
+            }
+        } catch (Throwable e) {
+            NeteaseExtension.LOG.error("NetEase block mapping initialization failed; disconnecting this player", e);
+            session.disconnect("NetEase client mapping unavailable");
+            return PacketSignal.HANDLED;
+        }
         session.setBlockMappings(blockMappings);
         session.setItemMappings(Registries.ITEMS.forVersion(spoofedVersion));
 
-        boolean patched = false;
-        try { patched = nc.geyserext.netease.session.SpoofedUpstream.patchAll(blockMappings); }
-        catch (Throwable e) { NeteaseExtension.LOG.error("BlockMappings Unsafe: " + e.getMessage()); }
+        final boolean patched = true;
 
         int maxId = 0;
         for (int i = 0; blockMappings.getDefinition(i) != null; i++) maxId = i;
