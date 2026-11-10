@@ -40,6 +40,13 @@ class SafeListenerContract(unittest.TestCase):
         self.assertNotIn("using shared:", h)
         self.assertIn("NetEase block mapping initialization failed", h)
 
+    def test_unsigned_netease_login_rejected(self):
+        handler = (JAVA / "handler/NetEaseUpstreamHandler.java").read_text()
+        verifier = (ROOT / "src/main/java/org/cloudburstmc/protocol/bedrock/util/NetEaseEncryptionUtils.java").read_text()
+        self.assertIn("if (!result.signed())", handler)
+        self.assertIn("case 1 -> throw new SecurityException", verifier)
+        self.assertIn("NETEASE_PUBLIC_KEY", verifier)
+
     def test_verified_uid_required(self):
         h = (JAVA / "handler/NetEaseUpstreamHandler.java").read_text()
         self.assertNotIn("neteaseUid = Math.abs(name.hashCode())", h)
