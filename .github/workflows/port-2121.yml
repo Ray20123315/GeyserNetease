@@ -6,6 +6,10 @@ on:
       - port/geyser-2.12.1
   workflow_dispatch:
 
+concurrency:
+  group: geyser-net-ease-2121-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -23,6 +27,8 @@ jobs:
           java-version: '21'
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
+      - name: Check source isolation invariants
+        run: python3 -m unittest discover -s tests -v
       - name: Compile and package
         run: chmod +x ./gradlew && ./gradlew --no-daemon clean shadowJar --stacktrace
       - name: Publish test artifact (not for production)
