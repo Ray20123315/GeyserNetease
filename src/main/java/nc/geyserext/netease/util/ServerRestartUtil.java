@@ -36,6 +36,10 @@ public final class ServerRestartUtil {
         if (port == geyser.config().bedrock().port()) {
             throw new IllegalArgumentException("NetEase UDP port must differ from the primary Bedrock port");
         }
+        int webrtcPort = geyser.config().bedrock().webrtcPort();
+        if (webrtcPort > 0 && port == webrtcPort) {
+            throw new IllegalArgumentException("NetEase UDP port must differ from the Geyser WebRTC port");
+        }
         if (neteaseServer != null) throw new IllegalStateException("NetEase listener already running");
 
         RaknetServer candidate = new RaknetServer(geyser,
