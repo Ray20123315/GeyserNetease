@@ -16,10 +16,13 @@ class SafeListenerContract(unittest.TestCase):
         self.assertIn("port == geyser.config().bedrock().port()", s)
         self.assertIn("port == 0", s)
         self.assertIn("new int[] {8}", s)
+        self.assertIn("port == webrtcPort", s)
 
     def test_fail_closed_on_start_failure(self):
         s = (JAVA / "util/ServerRestartUtil.java").read_text()
-        self.assertIn("close(candidate, initializer)", s)
+        self.assertIn("close(candidate, initializer, bindAttempted)", s)
+        self.assertIn("playerGroupField.set(candidate, initializer.getEventLoopGroup())", s)
+        self.assertIn("bootstrapFutures", s)
 
     def test_shutdown_cleans_side_listener(self):
         ext = (JAVA / "NeteaseExtension.java").read_text()
