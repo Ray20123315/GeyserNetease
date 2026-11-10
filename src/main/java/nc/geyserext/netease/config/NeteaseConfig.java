@@ -15,6 +15,10 @@ public final class NeteaseConfig {
     @JsonProperty("disconnect-message")
     private String disconnectMessage = "This server only accepts NetEase clients.";
 
+    @JsonProperty("netease-listen-port")
+    private int neteaseListenPort = 0;
+
+    public int neteaseListenPort() { return neteaseListenPort; }
     public boolean onlyNeteaseClients() { return onlyNeteaseClients; }
     public boolean debugMode() { return debugMode; }
     public String disconnectMessage() { return disconnectMessage; }
