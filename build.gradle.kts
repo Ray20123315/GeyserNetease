@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "nc.geyserext"
-version = "1.1.0"
+version = "1.2.0-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -19,21 +19,21 @@ repositories {
 
 dependencies {
     // Geyser core — provided by the Geyser platform at runtime
-    compileOnly("org.geysermc.geyser:core:2.9.5-SNAPSHOT") {
+    compileOnly("org.geysermc.geyser:core:2.12.1-SNAPSHOT") {
         exclude(group = "com.google.code.gson", module = "gson")
         exclude(group = "org.cloudburstmc.netty", module = "netty-transport-raknet")
     }
 
     // Protocol library — provided by Geyser at runtime
-    compileOnly("org.cloudburstmc.protocol:bedrock-codec:3.0.0.Beta12-20260602.165120-25")
-    compileOnly("org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta12-20260602.165120-26")
+    compileOnly("org.cloudburstmc.protocol:bedrock-codec:3.0.0.Beta15-20261026.210753-2")
+    compileOnly("org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta15-20261026.210753-2")
 
     // RakNet / Netty — provided by Geyser at runtime
-    compileOnly("org.cloudburstmc.netty:netty-transport-raknet:1.0.0.CR3-20260418.124334-32")
-    compileOnly("io.netty:netty-transport:4.2.7.Final")
-    compileOnly("io.netty:netty-buffer:4.2.7.Final")
-    compileOnly("io.netty:netty-codec:4.2.7.Final")
-    compileOnly("io.netty:netty-common:4.2.7.Final")
+    compileOnly("org.cloudburstmc.netty:netty-transport-raknet:2.0.0.CR6-20261030.131938-23")
+    compileOnly("io.netty:netty-transport:4.2.20.Final")
+    compileOnly("io.netty:netty-buffer:4.2.20.Final")
+    compileOnly("io.netty:netty-codec:4.2.20.Final")
+    compileOnly("io.netty:netty-common:4.2.20.Final")
     compileOnly("com.google.code.gson:gson:2.10.1")
     compileOnly("it.unimi.dsi:fastutil:8.5.12")
     compileOnly("org.cloudburstmc.math:immutable:2.0")
