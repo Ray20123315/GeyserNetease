@@ -82,6 +82,9 @@ public class NetEaseUpstreamHandler extends UpstreamHandlerBase {
         try {
             if (packet.getAuthPayload() instanceof CertificateChainPayload chain) {
                 ChainValidationResult result = NetEaseEncryptionUtils.validateChain(chain);
+                if (!result.signed()) {
+                    throw new SecurityException("NetEase login chain is not signed by the trusted authority");
+                }
                 var extra = result.identityClaims().extraData;
                 String name = extra.displayName != null ? extra.displayName : "NetEasePlayer";
                 Long iat = (Long) result.rawIdentityClaims().get("iat");
