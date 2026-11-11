@@ -5,6 +5,30 @@ ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "src/main/java/nc/geyserext/netease"
 
 class SafeListenerContract(unittest.TestCase):
+    def test_java21_build_target(self):
+        build = (ROOT / "build.gradle.kts").read_text()
+        self.assertIn("sourceCompatibility = JavaVersion.VERSION_21", build)
+        self.assertIn("targetCompatibility = JavaVersion.VERSION_21", build)
+        self.assertNotIn("JavaVersion.VERSION_17", build)
+
+    def test_modern_game_protocol_imports(self):
+        files = (
+            "handler/NetEaseUpstreamHandler.java",
+            "handler/UpstreamHandlerBase.java",
+            "session/SpoofedUpstream.java",
+        )
+        for filename in files:
+            with self.subTest(filename=filename):
+                source = (JAVA / filename).read_text()
+                self.assertIn(
+                    "import org.geysermc.geyser.network.bedrock.GameProtocol;",
+                    source,
+                )
+                self.assertNotIn(
+                    "import org.geysermc.geyser.network.GameProtocol;",
+                    source,
+                )
+
     def test_no_primary_listener_restart(self):
         s = (JAVA / "util/ServerRestartUtil.java").read_text()
         self.assertNotIn("getGeyserServer().shutdown()", s)
